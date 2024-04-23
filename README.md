@@ -76,3 +76,38 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Im11a2VzaC5tdXJ1Z2FuIiwiZW1
 ### dammy
 
 ![alt text](image-4.png)
+
+
+
+### Auth ミドルウェア
+http  リクエストの中身の解析 つまりそのリクエストに関連するすべてのデータ。Go言語のGinフレームワークでは、contextオブジェクトはリクエストの受け取り、レスポンスの送信、リクエスト中のデータの保持と操作など、HTTPリクエストのライフサイクルにおける中心的な役割を果たす。
+
+リクエストのパラメータが変わると、新しいリクエストが発生するため、新しいcontextオブジェクトが生成されます。同じリクエストであれば、既存のcontextがそのまま使用され続ける。つまり、各リクエストは独立したcontextを持ち、それぞれが独自のデータと状態を保持。これにより、リクエスト間でデータが混在することなく、各リクエストを独立して処理することができる。
+
+以下の authorizationを 解析する
+```sh
+GET http://{{host}}/api/secured/ping HTTP/1.1
+content-type: application/json
+authorization: dammyyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Im11a2VzaC5tdXJ1Z2FuIiwiZW1haWwiOiJtdWtlc2hAZ28uY29tIiwiZXhwIjoxNzEzODQxNDYzfQ.dbZT8b3PoaCkAm7D_DTAYxuQbu5Jk6GQY5ox1CgqKJU
+```
+
+```sh
+func Auth() gin.HandlerFunc{
+	return func(context *gin.Context) {
+		tokenString := context.GetHeader("Authorization")
+		if tokenString == "" {
+			context.JSON(401, gin.H{"error": "request does not contain an access token"})
+			context.Abort()
+			return
+		}
+		err:= auth.ValidateToken(tokenString)
+		if err != nil {
+			context.JSON(401, gin.H{"error": err.Error()})
+			context.Abort()
+			return
+		}
+		context.Next()
+	}
+}
+```
+
